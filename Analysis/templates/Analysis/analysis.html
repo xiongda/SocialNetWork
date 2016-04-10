@@ -1,0 +1,331 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'Analysis/style.css' %}" > </link>
+    <script type="text/javascript" src="{% static 'jquery-2.1.4/jquery.js' %}" > </script>
+    <script type="text/javascript" src="{% static 'Uploadify/swfobject.js' %}" > </script>
+    <script type="text/javascript" src="{% static 'Uploadify/jquery.uploadify.min.js' %}" > </script>
+    <script type="text/javascript" src="{% static 'highcharts/highcharts.js' %}" > </script>
+    
+
+<!DOCTYPE html>
+<html>
+<head>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8"> 
+</head>
+</head>
+<body>
+    <div class="container" >
+        <div class="spanH1">
+            <div class="span4">
+                <div class="span4"></div>
+                <div class="span4">
+                    <br />
+                    <span class="logo">Social Network</span>
+                </div>
+            </div>
+            <div class="span6">
+                <div class="spanH1_3"></div>
+                <div class="spanH1_3">
+                    <div class="span2">
+                        <a href="index.html" class="white_a">
+                        <span class="span">首页</span>
+                        </a>
+                    </div>
+                    <div class="span2">
+                        <a href="analysis.html" class="white_a">
+                        <span class="currentSpan">网络统计</span>
+                        </a>
+                    </div>
+                    <div class="span2">
+                        <a href="recommend.html" class="white_a">
+                        <span class="span">推荐系统</span>
+                        </a> 
+                    </div>                   
+                    <div class="span2">
+                        <a href="diffusion.html" class="white_a">
+                        <span class="span">信息扩散</span>
+                        </a>                        
+                    </div>
+                    <div class="span2"></div>
+                </div>
+                <div class="spanH1_3"></div>
+            </div>
+        </div>
+        <hr />
+        <div class="spanH9">
+            <div class="span_15"></div>
+            <div class="span7">
+                <div class="spanH_5"></div>
+                <div class="spanH8">
+                    <div class="span4">
+                        <div>
+                            <form enctype="multipart/form-data" method="POST">
+                                <input type= "file" id="file_upload"  name="file_upload" ></input>
+                            </form>
+                        </div>
+                        <div class="spanH_100content">
+                        <br />
+                        <p class="pCenter">网络全局特征</p><br />
+                        <p class="p">&nbsp &nbsp nodes：<span id="nodes"></span></p>
+                        <p class="p">&nbsp &nbsp edges：<span id="edges"></span></p>
+                        <p class="p">&nbsp &nbsp zeroDegNodes：<span id="zeroDegNodes"></span></p>
+                        <p class="p">&nbsp &nbsp zeroInDegNodes：<span id="zeroInDegNodes"></span></p>
+                        <p class="p">&nbsp &nbsp zeroOutDegNodes: <span id="zeroOutDegNodes"></span></p>
+                        <p class="p">&nbsp &nbsp nonZeroIn-OutDegNodes: <span id="nonZeroIn-OutDegNodes"></span></p>
+                        <p class="p">&nbsp &nbsp uniqueDirectedEdges: <span id="uniqueDirectedEdges"></span></p>
+                        <p class="p">&nbsp &nbsp selfEdges: <span id="selfEdges"></span></p>
+                        <p class="p">&nbsp &nbsp biDirEdges: <span id="biDirEdges"></span></p>
+                        <p class="p">&nbsp &nbsp approxFullDiameter: <span id="approxFullDiameter"></span></p>
+                        <p class="p">&nbsp &nbsp 90effectiveDiameter: <span id="90effectiveDiameter"></span></p>
+                        <p class="p">&nbsp &nbsp averageDegree: <span id="averageDegree"></span></p>  
+                        <p class="p">&nbsp &nbsp description：<span id="description"></span></p>    
+                        </div>         
+                    </div>
+                    <div class='span6'>
+                        <div class='spanH5'>
+                            <div class="spanH_5">
+                                <p class="pCenter">度分布</p>
+                            </div>
+                            <br />
+                            <div class="spanH9">
+                                <div id="degreeDistribution" class="spanImage">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="spanH5">
+                            <div class="spanH_5">
+                                <p class="pCenter">聚类系数分布</p>
+                            </div>
+                            <br />
+                            <div class="spanH9">
+                                <div id="cluDistribution" class="spanImage">
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="spanH_5"></div>
+                <div class="spanH_5"></div>
+                <div class="spanH_5"></div>
+            </div>
+            <div class="span_15"></div>
+        </div>
+    </div>
+</body>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+    $('#file_upload').uploadify({
+        'debug':false,
+        'uploader':"/upload_script",
+        'swf':"/static/Uploadify/uploadify.swf",
+        'buttonClass':'btn',
+        'buttonCursor':'hand',
+        'fileObjName':'file_upload',
+        'height':20,
+        'width':60,
+        'progressData':'percentage',
+        'auto':true,
+        'multi':false,
+        'checkExisting':false,
+        'buttonText':'上传网络',
+        'removeCompleted':true,
+        'fileTypeExts':'*.txt',
+        'fileTypeDesc':'net document',
+        'method':'POST',
+        'onUploadError':function(file,errorCode,errorMsg,errorString){
+            $('#id_span_msg').html(file.name +"上传失败，错误码：" + errorMsg +errorString);
+            },
+        'onUploadSuccess':function(file, data, response){
+            $('#id_span_msg').html('上传成功！网络正在处理...');
+            $.getJSON('/results/json',{'file':data},function(ret){
+                if(ret['result'] != 0)
+                    $('#id_span_msg').html('网络文件错误！');
+                else{
+                    $('#id_span_msg').html('处理完毕！');
+                    $('#nodes').html(ret['nodes']);
+                    $('#edges').html(ret['edges']);
+                    $('#zeroDegNodes').html(ret['zeroDegNodes']);
+                    $('#zeroInDegNodes').html(ret['zeroInDegNodes']);
+                    $('#zeroOutDegNodes').html(ret['zeroOutDegNodes']);
+                    $('#nonZeroIn-OutDegNodes').html(ret['nonZeroIn-OutDegNodes']);
+                    $('#uniqueDirectedEdges').html(ret['uniqueDirectedEdges']);
+                    $('#selfEdges').html(ret['selfEdges']);
+                    $('#description').html(ret['description']);
+                    $('#biDirEdges').html(ret['biDirEdges']);
+                    $('#approxFullDiameter').html(ret['approxFullDiameter']);
+                    $('#90effectiveDiameter').html(ret['90effectiveDiameter']);
+                    $('#averageDegree').html(ret['averageDegree']);
+
+                   $('#degreeDistribution').highcharts({
+                        chart:{
+                            events: {
+                                selection: function (event) {
+                                    var text,
+                                        label;
+                                    if (event.xAxis) {
+                                        text = 'min: ' + Highcharts.numberFormat(event.xAxis[0].min, 2) + ', max: ' + Highcharts.numberFormat(event.xAxis[0].max, 2);
+                                    } else {
+                                        text = 'Selection reset';
+                                    }
+                                    label = this.renderer.label(text, 100, 120)
+                                        .attr({
+                                            fill: Highcharts.getOptions().colors[0],
+                                            padding: 10,
+                                            r: 5,
+                                            zIndex: 8
+                                        })
+                                       .css({
+                                       color: '#FFFFFF'
+                                        })
+                                       .add();
+
+                                   setTimeout(function () {
+                                       label.fadeOut();
+                                    }, 1000);
+                                }
+                           },
+                           zoomType: 'x'
+                        },
+                        title: {
+                            text: 'Degree-Node Count Distribution',
+                            x: -20 //center
+                        },
+
+                        xAxis: {
+                            categories: ret['Degree'] 
+                        },
+                        yAxis: {
+                            max:ret['DegreeCountMax'],
+                            title: {
+                                text: 'NodeCount'
+                            },
+                            plotLines: [{
+                                value: 0,
+                                width: 1,
+                                color: '#990099'
+                            }]
+                        },
+
+                        series: [{
+                            name:"Node Count",
+                            data: ret['DegreeCount'],
+                            showInLegend: false,
+                             
+                       }]
+                    });
+                    $('#cluDistribution').highcharts({
+                        chart:{
+                            events: {
+                                selection: function (event) {
+                                    var text,
+                                        label;
+                                    if (event.xAxis) {
+                                        text = 'min: ' + Highcharts.numberFormat(event.xAxis[0].min, 2) + ', max: ' + Highcharts.numberFormat(event.xAxis[0].max, 2);
+                                    } else {
+                                        text = 'Selection reset';
+                                    }
+                                    label = this.renderer.label(text, 100, 120)
+                                        .attr({
+                                            fill: Highcharts.getOptions().colors[0],
+                                            padding: 10,
+                                            r: 5,
+                                            zIndex: 8
+                                        })
+                                       .css({
+                                       color: '#FFFFFF'
+                                        })
+                                       .add();
+
+                                   setTimeout(function () {
+                                       label.fadeOut();
+                                    }, 1000);
+                                }
+                           },
+                           zoomType: 'x'
+                        },
+                        title: {
+                            text: 'Degree-Clustering Coefficient Distribution',
+                            x: -20 //center
+                        },
+
+                        xAxis: {
+                            categories: ret['CluDegree'] 
+                        },
+                        yAxis: {
+                            max:1,
+                            title: {
+                                text: 'Clustering Coefficient'
+                            },
+                            plotLines: [{
+                                value: 0,
+                                width: 1,
+                                color: '#990099'
+                            }]
+                        },
+
+                        series: [{
+                            name:"Coefficient",
+                            data: ret['Clu'],
+                            showInLegend: false,
+                             
+                       }]
+                    });
+                }
+            });
+     }
+    });
+/*    function drawCoordinateLine(xfMargin,yfMargin,xLenght,yLenght,xDescription,yDescription,lineCanvasID,nodeCanvasID,labelCanvasID,coordianteColor){
+            var lineCanvas = document.getElementById(lineCanvasID);
+            var nodeCanvas = document.getElementById(nodeCanvasID);
+            var labelCanvas = document.getElementById(labelCanvasID);
+            var WIDTH = lineCanvas.width; var HEIGHT = lineCanvas.height;
+            var StartX = parseInt(WIDTH * xfMargin)+0.5; var StartY = parseInt(HEIGHT * yfMargin);
+            var EndX = parseInt(WIDTH * (1 - xfMargin)); var EndY = parseInt(HEIGHT * (1-yfMargin))+0.5;
+            var lineContext = lineCanvas.getContext('2d');
+            lineContext.strokeStyle = coordianteColor;
+           lineContext.fillStyle = 'rgb(250,0,0)';
+            lineContext.moveTo(StartX,StartY);
+            lineContext.lineTo(StartX,EndY);
+            lineContext.moveTo(StartX,EndY);
+            lineContext.lineTo(EndX,EndY);
+            lineContext.lineWidth = 1;
+            lineContext.stroke();
+            var y = parseInt(HEIGHT*yfMargin*2);
+            var yStep = parseInt((EndY - y)/10);
+            while(y < EndY){
+                drawXLinePoint(lineContext,StartX,y,coordianteColor);
+                y = y + yStep;
+            }
+            var x = StartX;
+            var xStep = parseInt((EndX-StartX)/10*HEIGHT/WIDTH);
+            var endx = parseInt(EndX - xStep);
+            while(x < endx){
+                 drawYLinePoint(lineContext,x,EndY,coordianteColor);
+                 x = x + xStep;
+            }
+    };
+    function drawRecPoint(context,x,y,strColor){
+             context.fillStyle = strColor;
+             context.fillRect(x,y,2,2);
+
+    };
+    function drawXLinePoint(context,x,y,strColor){
+             context.moveTo(x-1,y+0.5);
+             context.lineTo(x+1,y+0.5);
+             context.strokeStyle = strColor;
+             context.stroke();
+
+    };
+    function drawYLinePoint(context,x,y,strColor){
+            context.moveTo(x,y-1);
+            context.lineTo(x,y+1);
+            context.strokeStyle = strColor;
+            context.stroke();
+    };*/
+});
+    
+  </script>
+</html>
